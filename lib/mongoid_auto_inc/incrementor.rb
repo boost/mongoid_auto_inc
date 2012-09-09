@@ -3,8 +3,9 @@
 module MongoidAutoInc
   class Incrementor
     class Sequence
-      def initialize(sequence, collection_name, seed)
+      def initialize(sequence, session_name, collection_name, seed)
         @sequence = sequence.to_s
+        @session = session_name.to_s
         @collection = collection_name.to_s
         exists? || create(seed)
       end
@@ -31,7 +32,7 @@ module MongoidAutoInc
         if ::Mongoid::VERSION < '3'
           Mongoid.database[@collection]
         else
-          Mongoid.default_session[@collection]
+          Mongoid.session(@session)[@collection]
         end
       end
 
@@ -66,15 +67,16 @@ module MongoidAutoInc
     def initialize(options=nil)
       options ||= {}
       @collection = options[:collection] || "sequences"
+      @session = options[:session] || "default"
       @seed = options[:seed].to_i
     end
 
     def [](sequence)
-      Sequence.new(sequence, @collection, @seed)
+      Sequence.new(sequence, @session, @collection, @seed)
     end
 
     def []=(sequence, number)
-      Sequence.new(sequence, @collection, @seed).set(number)
+      Sequence.new(sequence, @session, @collection, @seed).set(number)
     end
   end
 end
